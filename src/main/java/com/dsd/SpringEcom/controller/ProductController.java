@@ -5,7 +5,6 @@ import com.dsd.SpringEcom.model.Product;
 import com.dsd.SpringEcom.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,13 +48,41 @@ public class ProductController {
 
     @PostMapping("/product")
     public ResponseEntity<?> addProduct(@RequestPart Product product, @RequestPart MultipartFile imageFile) {
-        Product savedProduct = null;
         try {
-            savedProduct = productService.addProduct(product, imageFile);
+            Product savedProduct = productService.addOrUpdateProduct(product, imageFile);
             return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
         } catch (IOException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    @PutMapping("/product/{id}")
+    public ResponseEntity<String> updateProduct(@RequestPart Product product, @RequestPart MultipartFile imageFile, @PathVariable int id) {
+        Product updatedProduct = null;
+        try{
+            updatedProduct = productService.addOrUpdateProduct(product, imageFile);
+            return new ResponseEntity<>("Updated Successfully", HttpStatus.ACCEPTED);
+        } catch (IOException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @DeleteMapping("/product/{id}")
+    public ResponseEntity<String> deleteProduct(@PathVariable int id) {
+        Product product = productService.getProductById(id);
+        if(product.getId() > 0) {
+            productService.deleteProduct(id);
+            return new ResponseEntity<>("Deleted Successfully", HttpStatus.OK);
+        }
+        else
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/products/search")
+    public ResponseEntity<List<Product>> searchProducts(@RequestParam String keyword) {
+        List<Product> products = productService.searchProducts(keyword);
+        System.out.println("Searching with "+ keyword);
+        return new ResponseEntity<>(products, HttpStatus.OK);
     }
 }
